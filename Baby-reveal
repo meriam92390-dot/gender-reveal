@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gender Reveal - Fille ou Garçon ?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Caveat:wght@600&family=Montserrat:wght@600;800&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: #f7f1e5;
+      background-image: radial-gradient(#dfcfb5 0.75px, transparent 0.75px), radial-gradient(#d6c2a2 0.75px, #fbf7ee 0.75px);
+      background-size: 30px 30px;
+      background-position: 0 0, 15px 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Montserrat', sans-serif;
+      padding: 10px;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 740px;
+      background: radial-gradient(circle at 50% 30%, #fffdfa 0%, #f7f0e3 100%);
+      border-radius: 24px;
+      box-shadow: 0 15px 35px rgba(179, 147, 105, 0.25), 0 5px 15px rgba(0,0,0,0.06);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.8);
+    }
+
+    /* --- TITRE DU HAUT --- */
+    .header-title {
+      position: absolute;
+      top: 25px;
+      right: 25px;
+      text-align: center;
+      line-height: 0.95;
+    }
+    .header-title .boy {
+      font-family: 'Alex Brush', cursive;
+      font-size: 58px;
+      color: #8daed4;
+      display: block;
+    }
+    .header-title .or {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 16px;
+      color: #555;
+      margin: -5px 0;
+    }
+    .header-title .girl {
+      font-family: 'Alex Brush', cursive;
+      font-size: 58px;
+      color: #efa5b8;
+      display: block;
+    }
+
+    /* --- TITRE DU BAS --- */
+    .footer-title {
+      position: absolute;
+      bottom: 30px;
+      left: 20px;
+      font-family: 'Alex Brush', cursive;
+      font-size: 38px;
+      color: #be903b;
+      line-height: 1.1;
+      text-shadow: 1px 1px 2px rgba(255,255,255,0.9);
+      background: linear-gradient(45deg, #a47628, #e1ba6d, #9c6c1d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* --- ZONES À GRATTER --- */
+    .scratch-wrapper {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .boy-scratch-pos {
+      top: 220px;
+      right: 25px;
+    }
+
+    .girl-scratch-pos {
+      top: 400px;
+      left: 25px;
+    }
+
+    /* Texte incurvé SVG */
+    .curved-text-svg {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      pointer-events: none;
+      top: -30px;
+      left: -30px;
+    }
+    .curved-text-svg text {
+      font-family: 'Caveat', cursive;
+      font-size: 17px;
+      font-weight: 600;
+      fill: #3b3530;
+      letter-spacing: 0.5px;
+    }
+
+    .scratch-box {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+      overflow: hidden;
+    }
+
+    /* Message caché sous le grattage */
+    .secret-result {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 10px;
+    }
+    .secret-result .icon {
+      font-size: 26px;
+      margin-bottom: 2px;
+    }
+    .secret-result .status {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .secret-result .gender-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+    }
+    .win-boy { color: #4382c4; }
+    .win-girl { color: #d65575; }
+    .lose { color: #999; }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      border-radius: 50%;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    /* --- ILLUSTRATIONS (LIONCEAUX & BALLONS) --- */
+    .lion-illustration {
+      position: absolute;
+      pointer-events: none;
+    }
+    .boy-lion {
+      top: 30px;
+      left: 15px;
+      width: 180px;
+      height: 270px;
+    }
+    .girl-lion {
+      bottom: 20px;
+      right: 15px;
+      width: 180px;
+      height: 270px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <!-- Titre haut -->
+    <div class="header-title">
+      <span class="boy">Garçon</span>
+      <div class="or">ou</div>
+      <span class="girl">Fille ?</span>
+    </div>
+
+    <!-- Illustration Lionceau Garçon + Ballons Bleus/Beiges -->
+    <svg class="lion-illustration boy-lion" viewBox="0 0 200 300">
+      <!-- Grappe de ballons -->
+      <g>
+        <circle cx="100" cy="70" r="32" fill="#d9c5b2" />
+        <circle cx="65" cy="85" r="28" fill="#b9d5ec" />
+        <circle cx="135" cy="85" r="26" fill="#c3d9ec" />
+        <circle cx="85" cy="45" r="24" fill="#ede3d5" />
+        <circle cx="115" cy="50" r="22" fill="#9bc2e6" />
+        <circle cx="50" cy="115" r="20" fill="#a4c6e8" />
+        <circle cx="140" cy="120" r="24" fill="#d0bba6" />
+        <circle cx="95" cy="110" r="34" fill="#eddccb" />
+        <circle cx="70" cy="135" r="18" fill="#f5ede3" />
+        <circle cx="120" cy="135" r="20" fill="#c8daf0" />
+      </g>
+      <!-- Ficelles -->
+      <path d="M95,145 Q90,175 100,200 M95,145 Q105,175 102,200 M95,145 Q80,170 98,200" stroke="#999" stroke-width="1.2" fill="none"/>
+      <!-- Petit Lionceau -->
+      <g transform="translate(45, 175) scale(0.65)">
+        <!-- Oreilles -->
+        <circle cx="40" cy="45" r="16" fill="#c89659"/>
+        <circle cx="40" cy="45" r="10" fill="#e8ba84"/>
+        <circle cx="110" cy="45" r="16" fill="#c89659"/>
+        <circle cx="110" cy="45" r="10" fill="#e8ba84"/>
+        <!-- Queue -->
+        <path d="M120,120 Q150,110 145,85" stroke="#dbab6e" stroke-width="8" stroke-linecap="round" fill="none"/>
+        <ellipse cx="145" cy="82" rx="7" ry="10" fill="#8f5b23"/>
+        <!-- Corps -->
+        <ellipse cx="75" cy="105" rx="36" ry="42" fill="#e4ba7f"/>
+        <ellipse cx="75" cy="110" rx="22" ry="28" fill="#faebd7"/>
+        <!-- Pattes avant tenant les ficelles -->
+        <ellipse cx="58" cy="85" rx="10" ry="15" fill="#e4ba7f" transform="rotate(-15 58 85)"/>
+        <ellipse cx="92" cy="85" rx="10" ry="15" fill="#e4ba7f" transform="rotate(15 92 85)"/>
+        <!-- Pattes arrière -->
+        <ellipse cx="45" cy="135" rx="15" ry="11" fill="#e4ba7f"/>
+        <ellipse cx="105" cy="135" rx="15" ry="11" fill="#e4ba7f"/>
+        <!-- Tête -->
+        <circle cx="75" cy="55" r="32" fill="#e4ba7f"/>
+        <ellipse cx="75" cy="65" rx="16" ry="12" fill="#faebd7"/>
+        <!-- Yeux mignons -->
+        <ellipse cx="62" cy="50" rx="5" ry="7" fill="#36220f"/>
+        <circle cx="60" cy="48" r="2.5" fill="#ffffff"/>
+        <ellipse cx="88" cy="50" rx="5" ry="7" fill="#36220f"/>
+        <circle cx="86" cy="48" r="2.5" fill="#ffffff"/>
+        <!-- Museau & Sourire -->
+        <polygon points="75,60 70,55 80,55" fill="#844d21"/>
+        <path d="M75,60 L75,66 M71,66 Q75,70 79,66" stroke="#844d21" stroke-width="1.5" fill="none"/>
+      </g>
+    </svg>
+
+    <!-- ZONE DE GRATTAGE GARÇON -->
+    <div class="scratch-wrapper boy-scratch-pos">
+      <svg class="curved-text-svg" viewBox="0 0 200 200">
+        <path id="curve-boy" d="M 30,100 A 70,70 0 0,1 170,100" fill="transparent" />
+        <text><textPath href="#curve-boy" startOffset="50%" text-anchor="middle">Si tu penses que c'est un garçon...</textPath></text>
+      </svg>
+      <div class="scratch-box">
+        <div class="secret-result" id="res-boy"></div>
+        <canvas id="canvas-boy" width="120" height="120"></canvas>
+      </div>
+    </div>
+
+    <!-- ZONE DE GRATTAGE FILLE -->
+    <div class="scratch-wrapper girl-scratch-pos">
+      <svg class="curved-text-svg" viewBox="0 0 200 200">
+        <path id="curve-girl" d="M 30,100 A 70,70 0 0,1 170,100" fill="transparent" />
+        <text><textPath href="#curve-girl" startOffset="50%" text-anchor="middle">Si tu penses que c'est une fille...</textPath></text>
+      </svg>
+      <div class="scratch-box">
+        <div class="secret-result" id="res-girl"></div>
+        <canvas id="canvas-girl" width="120" height="120"></canvas>
+      </div>
+    </div>
+
+    <!-- Illustration Lionceau Fille + Ballons Roses/Beiges -->
+    <svg class="lion-illustration girl-lion" viewBox="0 0 200 300">
+      <!-- Grappe de ballons -->
+      <g>
+        <circle cx="100" cy="70" r="32" fill="#d9c5b2" />
+        <circle cx="65" cy="85" r="28" fill="#f7bfcb" />
+        <circle cx="135" cy="85" r="26" fill="#fad2dc" />
+        <circle cx="85" cy="45" r="24" fill="#ede3d5" />
+        <circle cx="115" cy="50" r="22" fill="#e89cb1" />
+        <circle cx="50" cy="115" r="20" fill="#f3b1c1" />
+        <circle cx="140" cy="120" r="24" fill="#d0bba6" />
+        <circle cx="95" cy="110" r="34" fill="#eddccb" />
+        <circle cx="70" cy="135" r="18" fill="#fcf3ec" />
+        <circle cx="120" cy="135" r="20" fill="#f8c8d4" />
+      </g>
+      <!-- Ficelles -->
+      <path d="M95,145 Q90,175 100,200 M95,145 Q105,175 102,200 M95,145 Q80,170 98,200" stroke="#999" stroke-width="1.2" fill="none"/>
+      <!-- Petit Lionceau -->
+      <g transform="translate(45, 175) scale(0.65)">
+        <circle cx="40" cy="45" r="16" fill="#c89659"/>
+        <circle cx="40" cy="45" r="10" fill="#f3bfbf"/>
+        <circle cx="110" cy="45" r="16" fill="#c89659"/>
+        <circle cx="110" cy="45" r="10" fill="#f3bfbf"/>
+        <!-- Queue -->
+        <path d="M120,120 Q150,110 145,85" stroke="#dbab6e" stroke-width="8" stroke-linecap="round" fill="none"/>
+        <ellipse cx="145" cy="82" rx="7" ry="10" fill="#8f5b23"/>
+        <!-- Petit nœud rose sur la tête -->
+        <ellipse cx="48" cy="30" rx="5" ry="3" fill="#f07293" transform="rotate(-30 48 30)"/>
+        <ellipse cx="40" cy="32" rx="5" ry="3" fill="#f07293" transform="rotate(30 40 32)"/>
+        <circle cx="44" cy="31" r="2" fill="#fff"/>
+        <!-- Corps -->
+        <ellipse cx="75" cy="105" rx="36" ry="42" fill="#e4ba7f"/>
+        <ellipse cx="75" cy="110" rx="22" ry="28" fill="#faebd7"/>
+        <ellipse cx="58" cy="85" rx="10" ry="15" fill="#e4ba7f" transform="rotate(-15 58 85)"/>
+        <ellipse cx="92" cy="85" rx="10" ry="15" fill="#e4ba7f" transform="rotate(15 92 85)"/>
+        <ellipse cx="45" cy="135" rx="15" ry="11" fill="#e4ba7f"/>
+        <ellipse cx="105" cy="135" rx="15" ry="11" fill="#e4ba7f"/>
+        <!-- Tête -->
+        <circle cx="75" cy="55" r="32" fill="#e4ba7f"/>
+        <ellipse cx="75" cy="65" rx="16" ry="12" fill="#faebd7"/>
+        <!-- Joues roses -->
+        <ellipse cx="56" cy="58" rx="5" ry="3" fill="#f5a4b8" opacity="0.6"/>
+        <ellipse cx="94" cy="58" rx="5" ry="3" fill="#f5a4b8" opacity="0.6"/>
+        <ellipse cx="62" cy="50" rx="5" ry="7" fill="#36220f"/>
+        <circle cx="60" cy="48" r="2.5" fill="#ffffff"/>
+        <ellipse cx="88" cy="50" rx="5" ry="7" fill="#36220f"/>
+        <circle cx="86" cy="48" r="2.5" fill="#ffffff"/>
+        <polygon points="75,60 70,55 80,55" fill="#844d21"/>
+        <path d="M75,60 L75,66 M71,66 Q75,70 79,66" stroke="#844d21" stroke-width="1.5" fill="none"/>
+      </g>
+    </svg>
+
+    <!-- Titre bas -->
+    <div class="footer-title">
+      As-tu bien<br>deviné ?
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // ⚙️ CONFIGURATION DU SEXE DU BÉBÉ :
+    // Indiquez 'girl' (fille) ou 'boy' (garçon)
+    // ==========================================
+    const babyGender = 'girl'; // <-- Modifiez ici ('girl' ou 'boy')
+
+    // Préparation des résultats cachés
+    const resBoy = document.getElementById('res-boy');
+    const resGirl = document.getElementById('res-girl');
+
+    if (babyGender === 'girl') {
+      resBoy.innerHTML = `
+        <div class="icon">❌</div>
+        <div class="status lose">PERDU !</div>
+        <div class="gender-label">Pas cette fois 😉</div>
+      `;
+      resGirl.innerHTML = `
+        <div class="icon">🎀</div>
+        <div class="status win-girl">GAGNÉ !</div>
+        <div class="gender-label">C'est une FILLE !</div>
+      `;
+    } else {
+      resBoy.innerHTML = `
+        <div class="icon">🚙</div>
+        <div class="status win-boy">GAGNÉ !</div>
+        <div class="gender-label">C'est un GARÇON !</div>
+      `;
+      resGirl.innerHTML = `
+        <div class="icon">❌</div>
+        <div class="status lose">PERDU !</div>
+        <div class="gender-label">Pas cette fois 😉</div>
+      `;
+    }
+
+    // Fonction pour initialiser les pastilles à gratter pailletées
+    function setupScratch(canvasId, glitterBaseColor, glitterHighlight, isWinning) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Création du motif paillettes (glitter)
+      ctx.fillStyle = glitterBaseColor;
+      ctx.fillRect(0, 0, w, h);
+
+      // Bruit pailleté
+      for (let i = 0; i < 2500; i++) {
+        const x = Math.random() * w;
+        const y = Math.random() * h;
+        const r = Math.random() * 1.5;
+        ctx.fillStyle = Math.random() > 0.4 ? glitterHighlight : '#ffffff';
+        ctx.globalAlpha = Math.random() * 0.7;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+
+      // Texte "GRATTEZ ICI"
+      ctx.font = '800 13px Montserrat, sans-serif';
+      ctx.fillStyle = '#222222';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('GRATTEZ', w / 2, h / 2 - 8);
+      ctx.fillText('ICI', w / 2, h / 2 + 10);
+
+      // Effet de coin décollé décoratif
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath();
+      ctx.moveTo(w - 28, h);
+      ctx.lineTo(w, h - 28);
+      ctx.arcTo(w, h, w - 28, h, 14);
+      ctx.fill();
+
+      let isDrawing = false;
+      let confettiLaunched = false;
+
+      function scratch(e) {
+        if (!isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        const x = (clientX - rect.left) * (canvas.width / rect.width);
+        const y = (clientY - rect.top) * (canvas.height / rect.height);
+
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(x, y, 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (isWinning && !confettiLaunched) {
+          confettiLaunched = true;
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: babyGender === 'girl' ? ['#ff9ebb', '#ff4081', '#ffd1dc', '#ffd700'] : ['#80bfff', '#0077ff', '#b3d9ff', '#ffd700']
+          });
+        }
+      }
+
+      canvas.addEventListener('mousedown', (e) => { isDrawing = true; scratch(e); });
+      canvas.addEventListener('mousemove', scratch);
+      window.addEventListener('mouseup', () => isDrawing = false);
+
+      canvas.addEventListener('touchstart', (e) => { isDrawing = true; scratch(e); }, { passive: false });
+      canvas.addEventListener('touchmove', scratch, { passive: false });
+      window.addEventListener('touchend', () => isDrawing = false);
+    }
+
+    // Pastille Garçon (Paillettes bleues)
+    setupScratch('canvas-boy', '#a6cbe3', '#e4f2fc', babyGender === 'boy');
+
+    // Pastille Fille (Paillettes roses)
+    setupScratch('canvas-girl', '#e6a8b7', '#fdeaf0', babyGender === 'girl');
+  </script>
+</body>
+</html>
